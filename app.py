@@ -1,3 +1,4 @@
+"""Internet Time Capsule — creado por XatoDev (Xatodev.contacto@gmail.com)."""
 import os
 from datetime import date, timedelta
 from urllib.parse import urlparse
@@ -21,7 +22,16 @@ DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "doming
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
          "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
-app = Flask(__name__)
+AUTHOR = "XatoDev"
+AUTHOR_EMAIL = "Xatodev.contacto@gmail.com"
+VERSION = "2.1.0"
+
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(_ROOT, "templates"),
+    static_folder=os.path.join(_ROOT, "static"),
+)
 cache.init()
 
 
@@ -52,6 +62,15 @@ def parse_fecha(texto):
     return d
 
 
+@app.context_processor
+def inject_meta():
+    return {
+        "author": AUTHOR,
+        "author_email": AUTHOR_EMAIL,
+        "version": VERSION,
+    }
+
+
 @app.route("/")
 def index():
     hoy = date.today()
@@ -73,6 +92,11 @@ def buscar_page():
         min=MIN_DATE.isoformat(),
         max=hoy.isoformat(),
     )
+
+
+@app.route("/acerca")
+def acerca():
+    return render_template("acerca.html")
 
 
 @app.route("/capsula/<fecha>")
@@ -117,11 +141,14 @@ def api_buscar():
         desde, hasta = hasta, desde
     if (hasta - desde).days > 366:
         return jsonify({"error": "El rango máximo es de un año."}), 400
+    fuentes = busqueda.buscar(q, desde, hasta, idioma)
+    total = sum(f.get("total", len(f.get("items") or [])) for f in fuentes.values() if not f.get("omitido"))
     return jsonify({
         "q": q,
         "desde": desde.isoformat(),
         "hasta": hasta.isoformat(),
-        "fuentes": busqueda.buscar(q, desde, hasta, idioma),
+        "total": total,
+        "fuentes": fuentes,
     })
 
 
@@ -155,13 +182,36 @@ def share(fecha):
     )
 
 
+@app.route("/share/<fecha>/apod.png")
+def share_apod(fecha):
+    """Descarga solo la foto NASA del día en formato vertical (stories)."""
+    d = parse_fecha(fecha)
+    datos = orquestador.get_source("apod", d)
+    buf = imagen.render_apod(datos)
+    if buf is None:
+        abort(404, "No hay imagen APOD disponible para esta fecha.")
+    return send_file(
+        buf,
+        mimetype="image/png",
+        as_attachment=request.args.get("descargar") == "1",
+        download_name=f"nasa-apod-{d.isoformat()}.png",
+    )
+
+
 @app.route("/health")
 def health():
-    return "ok"
+    return jsonify({"status": "ok", "version": VERSION, "author": AUTHOR})
+
+
+def main():
+    """Punto de entrada para `internet-time-capsule` / `itc` tras instalar el paquete."""
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true", "yes")
+    print(f"Internet Time Capsule v{VERSION} · por {AUTHOR} <{AUTHOR_EMAIL}>")
+    print(f"→ http://{host}:{port}")
+    app.run(host=host, port=port, debug=debug)
 
 
 if __name__ == "__main__":
-    app.run(
-        host=os.environ.get("HOST", "127.0.0.1"),
-        port=int(os.environ.get("PORT", 5000)),
-    )
+    main()

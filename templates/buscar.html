@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Buscar · Internet Time Capsule</title>
+  <meta name="description" content="Busca un tema en la historia de internet: Hacker News, Stack Overflow, GDELT, MusicBrainz, Wikipedia y efemérides.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -14,13 +15,13 @@
     <header class="cabecera-seccion">
       <p class="kicker">Buscador del archivo</p>
       <h1 class="titulo-seccion">Busca un tema en la historia de internet</h1>
-      <p class="bajada">Escribe una palabra clave y un rango de fechas. Cada resultado con fecha enlaza a la cápsula de ese día.</p>
+      <p class="bajada">Escribe una palabra clave y un rango de fechas. Cada resultado con fecha enlaza a la cápsula de ese día. Fuentes: Hacker News, Stack Overflow, GDELT, MusicBrainz, Wikipedia y efemérides del día.</p>
     </header>
 
     <form id="form-busqueda" class="panel-busqueda">
       <label class="campo">
         <span class="kicker">Palabra clave</span>
-        <input name="q" type="search" maxlength="80" placeholder="Ej.: iPhone, terremoto, bitcoin">
+        <input name="q" type="search" maxlength="80" placeholder="Ej.: iPhone, terremoto, bitcoin, COVID" autocomplete="off">
       </label>
       <label class="campo">
         <span class="kicker">Desde</span>
@@ -39,9 +40,22 @@
       </label>
       <button class="boton" type="submit">Buscar</button>
     </form>
-    <p class="ayuda">Deja "Hasta" vacío para buscar un solo día. El rango máximo es de un año. Wikipedia no filtra por fecha: sus resultados son actuales.</p>
+    <p class="ayuda">Deja «Hasta» vacío para buscar un solo día. El rango máximo es de un año. Las efemérides solo aparecen cuando buscas un día concreto. Wikipedia no filtra estrictamente por fecha.</p>
 
+    <div class="atajos-busqueda">
+      <span class="kicker">Prueba con:</span>
+      <button type="button" class="chip-atajo" data-q="iphone" data-desde="2007-01-01" data-hasta="2007-12-31">iPhone 2007</button>
+      <button type="button" class="chip-atajo" data-q="bitcoin" data-desde="2010-01-01" data-hasta="2013-12-31">Bitcoin 2010–13</button>
+      <button type="button" class="chip-atajo" data-q="covid" data-desde="2020-01-01" data-hasta="2020-12-31">COVID 2020</button>
+      <button type="button" class="chip-atajo" data-q="chatgpt" data-desde="2022-11-01" data-hasta="2023-06-30">ChatGPT</button>
+    </div>
+
+    <div id="resumen" class="resumen-busqueda" hidden></div>
     <div id="resultados" class="resultados-zona"></div>
+
+    <footer class="pie-global">
+      <span>Creado por <strong>{{ author }}</strong> · <a href="mailto:{{ author_email }}">{{ author_email }}</a></span>
+    </footer>
   </main>
 
   <script>
@@ -50,16 +64,20 @@
       stackoverflow: { nombre: "Stack Overflow",              color: "#f48024" },
       gdelt:         { nombre: "Titulares del mundo (GDELT)", color: "#0f766e" },
       musicbrainz:   { nombre: "Álbumes (MusicBrainz)",       color: "#7c3aed" },
-      wikipedia:     { nombre: "Wikipedia (sin filtro de fecha)", color: "#1d1b18" },
+      wikipedia:     { nombre: "Wikipedia",                   color: "#1d1b18" },
+      eventos:       { nombre: "Efemérides del día",          color: "#8a5a00" },
     };
     const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
     const form = document.getElementById("form-busqueda");
     const zona = document.getElementById("resultados");
+    const resumen = document.getElementById("resumen");
 
     function grupo(clave, f) {
+      if (f.omitido) return "";
       const s = SECCIONES[clave];
+      if (!s) return "";
       const items = f.items || [];
       let cuerpo;
       if (f.error) cuerpo = `<p class="vacio">${esc(f.error)}</p>`;
@@ -76,12 +94,17 @@
     }
 
     async function buscar(qs) {
-      zona.innerHTML = '<p class="kicker">Buscando en las fuentes…</p>';
+      zona.innerHTML = '<p class="kicker cargando">Buscando en las fuentes…</p>';
+      resumen.hidden = true;
       try {
         const r = await fetch("/api/buscar?" + qs);
         const d = await r.json();
         if (!r.ok) { zona.innerHTML = `<p class="vacio">${esc(d.error)}</p>`; return; }
-        zona.innerHTML = Object.keys(SECCIONES).map(k => grupo(k, d.fuentes[k] || {})).join("");
+        const total = d.total || 0;
+        resumen.innerHTML = `<strong>${total}</strong> resultados para «${esc(d.q || "(todo)")}» · ${esc(d.desde)} → ${esc(d.hasta)}`;
+        resumen.hidden = false;
+        zona.innerHTML = Object.keys(SECCIONES).map(k => grupo(k, d.fuentes[k] || {})).filter(Boolean).join("")
+          || '<p class="vacio">No se encontraron resultados.</p>';
       } catch (e) {
         zona.innerHTML = '<p class="vacio">No se pudo completar la búsqueda.</p>';
       }
@@ -94,7 +117,15 @@
       buscar(qs);
     });
 
-    // Enlaces compartibles: /buscar?q=...&desde=...
+    document.querySelectorAll(".chip-atajo").forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.elements.q.value = btn.dataset.q || "";
+        form.elements.desde.value = btn.dataset.desde || form.elements.desde.value;
+        form.elements.hasta.value = btn.dataset.hasta || form.elements.hasta.value;
+        form.dispatchEvent(new Event("submit", { cancelable: true }));
+      });
+    });
+
     const inicial = new URLSearchParams(location.search);
     if (inicial.get("q") || inicial.get("desde")) {
       for (const [k, v] of inicial) { if (form.elements[k]) form.elements[k].value = v; }

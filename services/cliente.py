@@ -7,7 +7,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 HEADERS = {
-    "User-Agent": "InternetTimeCapsule/2.0 (proyecto personal, educativo)",
+    "User-Agent": "InternetTimeCapsule/2.1 (XatoDev; Xatodev.contacto@gmail.com)",
     "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
 }
 

@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Mira cómo estaba internet en cualquier día desde 2006.">
-  <title>Internet Time Capsule</title>
+  <meta name="description" content="Mira cómo estaba internet en cualquier día desde 2006. Creado por XatoDev.">
+  <meta name="author" content="XatoDev">
+  <title>Internet Time Capsule · por XatoDev</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -13,7 +14,7 @@
   {% include '_nav.html' %}
   <main class="pagina">
     <header>
-      <p class="kicker">Archivo de internet · desde 2006</p>
+      <p class="kicker">Archivo de internet · desde 2006 · v{{ version }}</p>
       <h1 class="titulo-portada">Internet<br>Time Capsule</h1>
       <p class="bajada">Elige un día del pasado y descubre qué pasaba en la red: lo más leído, lo más votado, el cielo de esa jornada y mucho más.</p>
     </header>
@@ -30,12 +31,17 @@
         {% for p in populares %}
         <a class="postal" href="/capsula/{{ p.fecha }}">
           <span class="anio">{{ p.fecha[:4] }}</span>
-          <span class="fecha-postal">{{ p.fecha }}</span>
-          <span class="texto-postal">{{ p.titulo }}</span>
+          <span class="fecha-pieza">{{ p.fecha }}</span>
+          <span class="texto-pieza">{{ p.titulo }}</span>
         </a>
         {% endfor %}
       </div>
     </section>
+
+    <footer class="pie-global">
+      <span>Creado por <strong>{{ author }}</strong> · <a href="mailto:{{ author_email }}">{{ author_email }}</a></span>
+      <a href="/acerca">Acerca del proyecto</a>
+    </footer>
   </main>
 
   <script>

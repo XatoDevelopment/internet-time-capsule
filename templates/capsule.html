@@ -6,11 +6,12 @@
   <title>Cápsula {{ fecha }} · Internet Time Capsule</title>
   <meta property="og:type" content="website">
   <meta property="og:title" content="Internet el {{ fecha }}">
-  <meta property="og:description" content="Así estaba internet un día como hoy. Abre tu cápsula del tiempo.">
+  <meta property="og:description" content="Así estaba internet un día como hoy. Abre tu cápsula del tiempo. Creado por XatoDev.">
   <meta property="og:image" content="{{ request.url_root }}share/{{ fecha }}.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Internet el {{ fecha }}">
   <meta name="twitter:image" content="{{ request.url_root }}share/{{ fecha }}.png">
+  <meta name="author" content="XatoDev">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -32,15 +33,23 @@
       </section>
       <div id="tarjetas" class="cards"></div>
       <footer class="marca">
-        <span>INTERNET TIME CAPSULE</span>
+        <span>INTERNET TIME CAPSULE · XatoDev</span>
         <span>internettimecapsule.com</span>
       </footer>
     </div>
 
     <div class="acciones">
-      <a class="boton" style="text-decoration:none;display:inline-block" href="/share/{{ fecha }}.png?descargar=1">Descargar como imagen</a>
+      <div class="menu-descarga">
+        <a class="boton" style="text-decoration:none;display:inline-block" href="/share/{{ fecha }}.png?descargar=1">Descargar póster (cápsula)</a>
+        <a class="boton-sec" style="text-decoration:none;display:inline-block" href="/share/{{ fecha }}/apod.png?descargar=1" id="btn-apod" title="Descarga solo la foto NASA del día en formato vertical">Descargar foto NASA del día</a>
+      </div>
       <button id="btn-compartir" class="boton-sec">Compartir</button>
     </div>
+
+    <footer class="pie-global">
+      <span>Creado por <strong>{{ author }}</strong> · <a href="mailto:{{ author_email }}">{{ author_email }}</a></span>
+      <span>v{{ version }}</span>
+    </footer>
   </main>
 
   <script>
@@ -75,10 +84,10 @@
         ? `<select class="ciudad" aria-label="Ciudad">${CIUDADES.map(([k, n]) =>
             `<option value="${k}"${k === d.ciudad ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`
         : "";
-      const foto = !d.error && d.imagen ? `<div class="foto"><img src="${proxy(d.imagen)}" alt=""></div>` : "";
+      const foto = !d.error && d.imagen ? `<div class="foto"><img src="${proxy(d.imagen)}" alt="" loading="lazy"></div>` : "";
       const lista = !d.error && d.items && d.items.length
         ? `<ol class="lista">${d.items.map(it => `
-            <li>${it.imagen ? `<img class="mini" src="${proxy(it.imagen)}" alt="">` : ""}
+            <li>${it.imagen ? `<img class="mini" src="${proxy(it.imagen)}" alt="" loading="lazy">` : ""}
             <span>${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.texto)}</a>` : esc(it.texto)}</span></li>`).join("")}</ol>`
         : "";
       const cuerpo = d.error
@@ -122,6 +131,10 @@
         .then(d => {
           tarjetas[f.id].innerHTML = contenido(f, d);
           if (d.hero) ponerFondo(d.hero);
+          if (f.id === "apod" && d.error) {
+            const btn = document.getElementById("btn-apod");
+            if (btn) { btn.style.opacity = "0.45"; btn.style.pointerEvents = "none"; btn.title = "No hay foto NASA para esta fecha"; }
+          }
         })
         .catch(() => {
           tarjetas[f.id].innerHTML = contenido(f, { error: "No se pudo cargar esta fuente." });
@@ -137,7 +150,7 @@
     });
 
     async function compartir() {
-      const datos = { title: "Internet el " + FECHA, text: "Mira cómo estaba internet ese día", url: location.href };
+      const datos = { title: "Internet el " + FECHA, text: "Mira cómo estaba internet ese día · Internet Time Capsule por XatoDev", url: location.href };
       if (navigator.share) {
         try { await navigator.share(datos); } catch (e) {}
         return;

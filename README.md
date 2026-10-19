@@ -1,5 +1,7 @@
 # Internet Time Capsule
 
+**Creado por [XatoDev](mailto:Xatodev.contacto@gmail.com)** · `Xatodev.contacto@gmail.com` · v2.1
+
 Muestra cómo estaba internet en cualquier fecha desde 2006. Todas las fuentes son gratuitas y no requieren registro ni clave de API.
 
 ## Fuentes
@@ -22,11 +24,41 @@ Muestra cómo estaba internet en cualquier fecha desde 2006. Todas las fuentes s
 
 Las imágenes pasan por `/img`, un proxy que solo acepta dominios de Wikimedia y NASA.
 
-## Descargar la imagen
+## Buscador mejorado
 
-El botón genera en el servidor un PNG de 1200x1600 con las 6 tarjetas principales y sus imágenes. Usa la fuente `static/fonts/DejaVuSans.ttf`.
+En `/buscar` puedes buscar una palabra clave dentro de un día o de un rango de hasta un año, en inglés o en español.
 
-## Ejecutar
+**Fuentes del buscador:** Hacker News, Stack Overflow, GDELT, MusicBrainz, Wikipedia y **efemérides del día** (cuando el rango es un solo día).
+
+Cada resultado con fecha enlaza a su cápsula. Los enlaces son compartibles:
+
+```
+/buscar?q=iphone&desde=2007-01-01&hasta=2007-12-31
+```
+
+Atajos rápidos en la interfaz: iPhone 2007, Bitcoin 2010–13, COVID 2020, ChatGPT.
+
+## Descargar imágenes
+
+- **Póster de la cápsula** (`/share/YYYY-MM-DD.png?descargar=1`): PNG 1200×1600 con las 6 tarjetas principales, imágenes y créditos de XatoDev.
+- **Foto NASA del día** (`/share/YYYY-MM-DD/apod.png?descargar=1`): formato vertical (1080×1350) listo para stories / redes, con título y explicación.
+
+## Instalar (recomendado)
+
+```bash
+# Desde el directorio del proyecto
+pip install -e .
+
+# Arrancar
+internet-time-capsule
+# o el alias corto:
+itc
+
+# Escuchar en todas las interfaces
+HOST=0.0.0.0 PORT=8080 internet-time-capsule
+```
+
+También puedes ejecutarlo sin instalar:
 
 ```bash
 pip install -r requirements.txt
@@ -41,6 +73,9 @@ Opcional: define `NASA_API_KEY` para más cuota en la foto del día.
 - **Railway:** detecta el `Procfile`.
 - Para conservar la caché entre reinicios, usa un volumen y apunta `ITC_DB` a una ruta dentro de él.
 
-## Buscador
+## Autor
 
-En `/buscar` puedes buscar una palabra clave dentro de un día o de un rango de hasta un año, en inglés o en español. Fuentes: Hacker News, Stack Overflow, GDELT, MusicBrainz y Wikipedia (esta última no filtra por fecha). Cada resultado con fecha enlaza a su cápsula. Los enlaces son compartibles: `/buscar?q=iphone&desde=2007-01-01&hasta=2007-12-31`.
+**XatoDev**  
+Correo: [Xatodev.contacto@gmail.com](mailto:Xatodev.contacto@gmail.com)
+
+Proyecto personal y educativo. Feedback y colaboraciones bienvenidos.

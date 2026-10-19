@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "internet-time-capsule"
+version = "2.1.0"
+description = "Cápsula del tiempo de internet: mira cómo estaba la red en cualquier día desde 2006."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "XatoDev", email = "Xatodev.contacto@gmail.com"},
+]
+keywords = ["internet", "archive", "time-capsule", "wayback", "flask", "history"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "Flask>=3.0.3",
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.12.3",
+    "Pillow>=10.1",
+    "gunicorn>=22.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/XatoDev/internet-time-capsule"
+Author = "https://github.com/XatoDev"
+Contact = "mailto:Xatodev.contacto@gmail.com"
+
+[project.scripts]
+internet-time-capsule = "app:main"
+itc = "app:main"
+
+[tool.setuptools]
+py-modules = ["app"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["services*"]
+
+[tool.setuptools.package-data]
+"*" = ["templates/*", "static/**/*"]

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Internet Time Capsule — creado por XatoDev. Archivo gratuito de internet desde 2006.">
+  <title>Acerca · Internet Time Capsule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% include '_nav.html' %}
+  <main class="pagina">
+    <header class="cabecera-seccion">
+      <p class="kicker">Sobre el proyecto</p>
+      <h1 class="titulo-seccion">Internet Time Capsule</h1>
+      <p class="bajada">Una cápsula del tiempo de la red: elige cualquier día desde 2006 y mira qué pasaba en Wikipedia, Reddit, Hacker News, la NASA, el clima y más.</p>
+    </header>
+
+    <section class="grupo" style="--color:#1d1b18; margin-bottom: 22px;">
+      <h2 class="grupo-titulo">Creado por {{ author }}</h2>
+      <p class="cita">Proyecto personal y educativo. Todas las fuentes son gratuitas y no requieren registro ni clave de API (salvo una NASA DEMO_KEY opcional).</p>
+      <p class="extra" style="margin-top:12px">
+        Contacto: <a href="mailto:{{ author_email }}">{{ author_email }}</a><br>
+        Versión: {{ version }}
+      </p>
+    </section>
+
+    <section class="grupo" style="--color:#0a6e5a; margin-bottom: 22px;">
+      <h2 class="grupo-titulo">Qué incluye</h2>
+      <ul class="lista">
+        <li><span>Wikipedia (EN/ES), efemérides y actualidad</span></li>
+        <li><span>Reddit · r/all vía Wayback Machine</span></li>
+        <li><span>Hacker News y Stack Overflow</span></li>
+        <li><span>Titulares del mundo (GDELT) y portadas de periódicos</span></li>
+        <li><span>NASA Astronomy Picture of the Day</span></li>
+        <li><span>Clima histórico, terremotos, divisas, discos, estrenos y festivos</span></li>
+        <li><span>Buscador por palabra clave en rangos de hasta un año</span></li>
+        <li><span>Descarga de póster PNG de la cápsula y de la foto NASA del día</span></li>
+      </ul>
+    </section>
+
+    <section class="grupo" style="--color:#0b3d91;">
+      <h2 class="grupo-titulo">Instalar y ejecutar</h2>
+      <pre class="codigo">pip install -e .
+internet-time-capsule
+# o: HOST=0.0.0.0 python app.py</pre>
+      <p class="ayuda" style="margin-top:12px">Opcional: define <code>NASA_API_KEY</code> para más cuota en la foto del día.</p>
+    </section>
+
+    <footer class="pie-global">
+      <span>© {{ author }} · {{ author_email }}</span>
+      <span>v{{ version }}</span>
+    </footer>
+  </main>
+</body>
+</html>
