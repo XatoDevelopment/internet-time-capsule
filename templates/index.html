@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mira cómo estaba internet en cualquier día desde 2006.">
+  <title>Internet Time Capsule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% include '_nav.html' %}
+  <main class="pagina">
+    <header>
+      <p class="kicker">Archivo de internet · desde 2006</p>
+      <h1 class="titulo-portada">Internet<br>Time Capsule</h1>
+      <p class="bajada">Elige un día del pasado y descubre qué pasaba en la red: lo más leído, lo más votado, el cielo de esa jornada y mucho más.</p>
+    </header>
+
+    <form id="form" class="buscador">
+      <label for="fecha" class="kicker">Elige una fecha</label>
+      <input id="fecha" type="date" value="{{ default }}" min="{{ min }}" max="{{ max }}" required>
+      <button type="submit" class="boton">Abrir la cápsula →</button>
+    </form>
+
+    <section class="populares">
+      <h2 class="kicker">Días para empezar</h2>
+      <div class="carrusel">
+        {% for p in populares %}
+        <a class="postal" href="/capsula/{{ p.fecha }}">
+          <span class="anio">{{ p.fecha[:4] }}</span>
+          <span class="fecha-postal">{{ p.fecha }}</span>
+          <span class="texto-postal">{{ p.titulo }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", e => {
+      e.preventDefault();
+      const v = document.getElementById("fecha").value;
+      if (v) location.href = "/capsula/" + v;
+    });
+  </script>
+</body>
+</html>

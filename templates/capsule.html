@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cápsula {{ fecha }} · Internet Time Capsule</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Internet el {{ fecha }}">
+  <meta property="og:description" content="Así estaba internet un día como hoy. Abre tu cápsula del tiempo.">
+  <meta property="og:image" content="{{ request.url_root }}share/{{ fecha }}.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Internet el {{ fecha }}">
+  <meta name="twitter:image" content="{{ request.url_root }}share/{{ fecha }}.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% include '_nav.html' %}
+  <main class="pagina">
+    <nav class="dias">
+      {% if anterior %}<a href="/capsula/{{ anterior }}">← Día anterior</a>{% else %}<span></span>{% endif %}
+      <a href="/buscar">Buscar un tema</a>
+      {% if siguiente %}<a href="/capsula/{{ siguiente }}">Día siguiente →</a>{% else %}<span></span>{% endif %}
+    </nav>
+
+    <div id="captura" class="captura">
+      <section id="hero" class="hero sin-foto">
+        <p class="kicker">Internet el día</p>
+        <h1 class="fecha-grande">{{ fecha }}</h1>
+        <p class="lema">{{ fecha_larga|capitalize }}</p>
+      </section>
+      <div id="tarjetas" class="cards"></div>
+      <footer class="marca">
+        <span>INTERNET TIME CAPSULE</span>
+        <span>internettimecapsule.com</span>
+      </footer>
+    </div>
+
+    <div class="acciones">
+      <a class="boton" style="text-decoration:none;display:inline-block" href="/share/{{ fecha }}.png?descargar=1">Descargar como imagen</a>
+      <button id="btn-compartir" class="boton-sec">Compartir</button>
+    </div>
+  </main>
+
+  <script>
+    const FECHA = "{{ fecha }}";
+    const CIUDADES = {{ ciudades|tojson }};
+    const FUENTES = [
+      { id: "wikipedia",     nombre: "Wikipedia · inglés",          icono: "W",  color: "#1d1b18" },
+      { id: "efemerides",    nombre: "Efemérides",                  icono: "E",  color: "#8a5a00" },
+      { id: "reddit",        nombre: "Reddit · r/all",              icono: "r",  color: "#ff4500" },
+      { id: "hackernews",    nombre: "Hacker News",                 icono: "Y",  color: "#ff6600" },
+      { id: "apod",          nombre: "NASA · Foto del día",         icono: "✦",  color: "#0b3d91" },
+      { id: "clima",         nombre: "Clima",                       icono: "☀",  color: "#d97706" },
+      { id: "wikipedia_es",  nombre: "Wikipedia · español",         icono: "ES", color: "#2563eb" },
+      { id: "actualidad",    nombre: "En las noticias (Wikipedia)", icono: "★",  color: "#b5179e" },
+      { id: "stackoverflow", nombre: "Stack Overflow",              icono: "SO", color: "#f48024" },
+      { id: "gdelt",         nombre: "Titulares del mundo (GDELT)", icono: "G",  color: "#0f766e" },
+      { id: "noticias",      nombre: "Portadas de periódicos",      icono: "N",  color: "#0a6e5a" },
+      { id: "terremotos",    nombre: "Terremotos (USGS)",           icono: "T",  color: "#b91c1c" },
+      { id: "economia",      nombre: "Divisas (BCE)",               icono: "$",  color: "#15803d" },
+      { id: "discos",        nombre: "Álbumes publicados",          icono: "♪",  color: "#7c3aed" },
+      { id: "lanzamientos",  nombre: "Estrenos y juegos (Wikidata)",icono: "▶",  color: "#0e7490" },
+      { id: "festivos",      nombre: "Festivos del mundo",          icono: "F",  color: "#be185d" },
+    ];
+
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const proxy = u => u ? "/img?u=" + encodeURIComponent(u) : "";
+    const SKELETON = '<div class="sk sk-foto"></div><div class="sk sk-titulo"></div><div class="sk"></div><div class="sk sk-corto"></div>';
+
+    function contenido(f, d) {
+      const selector = f.id === "clima"
+        ? `<select class="ciudad" aria-label="Ciudad">${CIUDADES.map(([k, n]) =>
+            `<option value="${k}"${k === d.ciudad ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`
+        : "";
+      const foto = !d.error && d.imagen ? `<div class="foto"><img src="${proxy(d.imagen)}" alt=""></div>` : "";
+      const lista = !d.error && d.items && d.items.length
+        ? `<ol class="lista">${d.items.map(it => `
+            <li>${it.imagen ? `<img class="mini" src="${proxy(it.imagen)}" alt="">` : ""}
+            <span>${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.texto)}</a>` : esc(it.texto)}</span></li>`).join("")}</ol>`
+        : "";
+      const cuerpo = d.error
+        ? `<p class="vacio">${esc(d.error)}</p>`
+        : `${foto}<h2 class="titulo">${esc(d.titulo)}</h2>
+           ${d.cita ? `<p class="cita">${esc(d.cita)}</p>` : ""}
+           ${lista}
+           ${d.extra ? `<p class="extra">${esc(d.extra)}</p>` : ""}`;
+      const pie = [
+        d.instantanea ? `Instantánea ${esc(d.instantanea)}` : "",
+        !d.error && d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Ver original →</a>` : "",
+      ].filter(Boolean).join("");
+      return `<header class="cab"><span class="insignia">${f.icono}</span><span>${esc(f.nombre)}</span>${selector}</header>
+        ${cuerpo}
+        <footer class="pie">${pie}</footer>`;
+    }
+
+    function ponerFondo(url) {
+      const hero = document.getElementById("hero");
+      if (hero.dataset.foto) return;
+      hero.dataset.foto = "1";
+      hero.classList.remove("sin-foto");
+      hero.style.backgroundImage = `url("${proxy(url)}")`;
+    }
+
+    const tarjetas = {};
+    const cont = document.getElementById("tarjetas");
+    FUENTES.forEach(f => {
+      const el = document.createElement("article");
+      el.className = "tarjeta";
+      el.style.setProperty("--color", f.color);
+      el.innerHTML = SKELETON;
+      cont.appendChild(el);
+      tarjetas[f.id] = el;
+    });
+
+    function cargar(f, ciudad) {
+      const q = ciudad ? `?ciudad=${encodeURIComponent(ciudad)}` : "";
+      return fetch(`/api/capsule/${FECHA}/${f.id}${q}`)
+        .then(r => r.json())
+        .then(d => {
+          tarjetas[f.id].innerHTML = contenido(f, d);
+          if (d.hero) ponerFondo(d.hero);
+        })
+        .catch(() => {
+          tarjetas[f.id].innerHTML = contenido(f, { error: "No se pudo cargar esta fuente." });
+        });
+    }
+
+    FUENTES.forEach(f => cargar(f));
+
+    document.addEventListener("change", e => {
+      if (!e.target.classList.contains("ciudad")) return;
+      tarjetas.clima.innerHTML = SKELETON;
+      cargar(FUENTES.find(f => f.id === "clima"), e.target.value);
+    });
+
+    async function compartir() {
+      const datos = { title: "Internet el " + FECHA, text: "Mira cómo estaba internet ese día", url: location.href };
+      if (navigator.share) {
+        try { await navigator.share(datos); } catch (e) {}
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(location.href);
+        alert("Enlace copiado");
+      } catch (e) {
+        prompt("Copia este enlace:", location.href);
+      }
+    }
+
+    document.getElementById("btn-compartir").addEventListener("click", compartir);
+  </script>
+</body>
+</html>

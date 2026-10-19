@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buscar · Internet Time Capsule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% include '_nav.html' %}
+  <main class="pagina">
+    <header class="cabecera-seccion">
+      <p class="kicker">Buscador del archivo</p>
+      <h1 class="titulo-seccion">Busca un tema en la historia de internet</h1>
+      <p class="bajada">Escribe una palabra clave y un rango de fechas. Cada resultado con fecha enlaza a la cápsula de ese día.</p>
+    </header>
+
+    <form id="form-busqueda" class="panel-busqueda">
+      <label class="campo">
+        <span class="kicker">Palabra clave</span>
+        <input name="q" type="search" maxlength="80" placeholder="Ej.: iPhone, terremoto, bitcoin">
+      </label>
+      <label class="campo">
+        <span class="kicker">Desde</span>
+        <input name="desde" type="date" value="{{ default }}" min="{{ min }}" max="{{ max }}" required>
+      </label>
+      <label class="campo">
+        <span class="kicker">Hasta</span>
+        <input name="hasta" type="date" value="{{ default }}" min="{{ min }}" max="{{ max }}">
+      </label>
+      <label class="campo">
+        <span class="kicker">Idioma</span>
+        <select name="idioma">
+          <option value="en">Inglés</option>
+          <option value="es">Español</option>
+        </select>
+      </label>
+      <button class="boton" type="submit">Buscar</button>
+    </form>
+    <p class="ayuda">Deja "Hasta" vacío para buscar un solo día. El rango máximo es de un año. Wikipedia no filtra por fecha: sus resultados son actuales.</p>
+
+    <div id="resultados" class="resultados-zona"></div>
+  </main>
+
+  <script>
+    const SECCIONES = {
+      hackernews:    { nombre: "Hacker News",                 color: "#ff6600" },
+      stackoverflow: { nombre: "Stack Overflow",              color: "#f48024" },
+      gdelt:         { nombre: "Titulares del mundo (GDELT)", color: "#0f766e" },
+      musicbrainz:   { nombre: "Álbumes (MusicBrainz)",       color: "#7c3aed" },
+      wikipedia:     { nombre: "Wikipedia (sin filtro de fecha)", color: "#1d1b18" },
+    };
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const form = document.getElementById("form-busqueda");
+    const zona = document.getElementById("resultados");
+
+    function grupo(clave, f) {
+      const s = SECCIONES[clave];
+      const items = f.items || [];
+      let cuerpo;
+      if (f.error) cuerpo = `<p class="vacio">${esc(f.error)}</p>`;
+      else if (!items.length) cuerpo = `<p class="vacio">Sin resultados para este criterio.</p>`;
+      else cuerpo = `<ol class="resultados">${items.map(it => `
+          <li>
+            <span class="fecha-chip">${it.fecha ? `<a href="/capsula/${esc(it.fecha)}">${esc(it.fecha)}</a>` : "—"}</span>
+            ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.texto)}</a>` : esc(it.texto)}
+          </li>`).join("")}</ol>`;
+      return `<section class="grupo" style="--color:${s.color}">
+        <h2 class="grupo-titulo">${esc(s.nombre)} <span class="cuenta">${items.length}</span></h2>
+        ${cuerpo}
+      </section>`;
+    }
+
+    async function buscar(qs) {
+      zona.innerHTML = '<p class="kicker">Buscando en las fuentes…</p>';
+      try {
+        const r = await fetch("/api/buscar?" + qs);
+        const d = await r.json();
+        if (!r.ok) { zona.innerHTML = `<p class="vacio">${esc(d.error)}</p>`; return; }
+        zona.innerHTML = Object.keys(SECCIONES).map(k => grupo(k, d.fuentes[k] || {})).join("");
+      } catch (e) {
+        zona.innerHTML = '<p class="vacio">No se pudo completar la búsqueda.</p>';
+      }
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const qs = new URLSearchParams(new FormData(form)).toString();
+      history.replaceState(null, "", "/buscar?" + qs);
+      buscar(qs);
+    });
+
+    // Enlaces compartibles: /buscar?q=...&desde=...
+    const inicial = new URLSearchParams(location.search);
+    if (inicial.get("q") || inicial.get("desde")) {
+      for (const [k, v] of inicial) { if (form.elements[k]) form.elements[k].value = v; }
+      buscar(new URLSearchParams(new FormData(form)).toString());
+    }
+  </script>
+</body>
+</html>
